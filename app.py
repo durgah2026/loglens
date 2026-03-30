@@ -93,9 +93,9 @@ def upload_file():
     else:
         return render_template('results.html', error="Invalid file type. Only .log files are allowed"), 400
 
-@app.route('/')
-def index():
-    return "LogLens API is running. Use the local upload.html file to upload log files."
+@app.route("/")
+def home():
+    return render_template("upload.html")
 
 if __name__ == '__main__':
     # Run server on http://127.0.0.1:5001/
