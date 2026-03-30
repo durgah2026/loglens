@@ -1,0 +1,7 @@
+127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /index.html HTTP/1.0" 200 2326
+192.168.1.1 - admin [11/Oct/2000:14:32:11 -0700] "POST /login HTTP/1.1" 403 5000
+10.0.0.1 - user [12/Oct/2000:15:11:02 -0700] "GET /api/data HTTP/1.1" 200 120
+Invalid line that should be skipped
+8.8.8.8 - guest [13/Oct/2000:16:00:00 -0700] "GET /favicon.ico HTTP/1.1" 404 0
+172.16.0.5 - bot [14/Oct/2000:17:45:30 -0700] "POST /submit HTTP/1.1" 201 1500
+1.1.1.1 - test [15/Oct/2000:18:22:15 -0700] "GET /extra HTTP/1.1" 200 300

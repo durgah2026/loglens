@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parsing Results - LogLens</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at top right, #1e3a8a 0%, transparent 40%),
+                              radial-gradient(circle at bottom left, #064e3b 0%, transparent 40%);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin: 0;
+            background: linear-gradient(to right, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.5rem;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-200 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .status-201 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .status-400, .status-403, .status-404 { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .status-500 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+        
+        .message-box {
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid #10b981;
+        }
+        
+        .error-box {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Upload Results</h1>
+        <p class="subtitle">Your log file has been analyzed</p>
+    </header>
+
+    {% if error %}
+    <div class="glass-panel">
+        <div class="message-box error-box">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        <div style="text-align: center;">
+            <button class="btn" onclick="window.history.back()">Go Back</button>
+        </div>
+    </div>
+    {% else %}
+    <div class="message-box">
+        <strong>Success!</strong> {{ message }}
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-value">{{ parsed_count }}</div>
+            <div class="stat-label">Total Logs Parsed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ data|length }}</div>
+            <div class="stat-label">Recent Logs Showed</div>
+        </div>
+    </div>
+
+    <div class="glass-panel table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>IP Address</th>
+                    <th>Method</th>
+                    <th>Path</th>
+                    <th>Status</th>
+                    <th>Attack Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                <tr>
+                    <td>{{ item.time }}</td>
+                    <td>{{ item.ip }}</td>
+                    <td><strong>{{ item.method }}</strong></td>
+                    <td>{{ item.path }}</td>
+                    <td>
+                        {% set status_int = item.status|int %}
+                        {% if status_int >= 200 and status_int < 300 %}
+                            {% set status_class = 'status-200' %}
+                        {% elif status_int >= 400 and status_int < 500 %}
+                            {% set status_class = 'status-400' %}
+                        {% elif status_int >= 500 %}
+                            {% set status_class = 'status-500' %}
+                        {% else %}
+                            {% set status_class = '' %}
+                        {% endif %}
+                        <span class="status-badge {{ status_class }}">{{ item.status }}</span>
+                    </td>
+                    <td>
+                        {% if item.attack == "SQL Injection" %}
+                            <span class="status-badge status-400">SQL Injection 🔴</span>
+                        {% elif item.attack == "XSS" %}
+                            <span class="status-badge status-500">XSS 🟡</span>
+                        {% elif item.attack == "Brute Force" %}
+                            <span class="status-badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">Brute Force 🔵</span>
+                        {% else %}
+                            <span class="status-badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">None ⚪</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <!-- If we know the user came from upload.html, a back button works best -->
+            <button class="btn" onclick="window.history.back()">Upload Another File</button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>
