@@ -8,26 +8,37 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
 
         :root {
-            --bg-color: #0f172a;
-            --glass-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f8fafc;
+            --bg-color: #030305;
+            --glass-bg: rgba(10, 10, 15, 0.85);
+            --glass-border: rgba(0, 243, 255, 0.25);
+            --text-main: #e2e8f0;
             --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #60a5fa;
+            --accent: #00f3ff;
+            --accent-hover: #70ffff;
+            --neon-magenta: #ff00ff;
+            --neon-green: #39ff14;
+            --neon-yellow: #fff01f;
         }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
-            background-image: radial-gradient(circle at top right, #1e3a8a 0%, transparent 40%),
-                              radial-gradient(circle at bottom left, #064e3b 0%, transparent 40%);
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                radial-gradient(circle at 50% 50%, #1e1b4b 0%, #030305 100%);
+            background-size: 30px 30px, 30px 30px, 100% 100%;
             color: var(--text-main);
             margin: 0;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow-x: hidden;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
         }
 
         .container {
@@ -38,23 +49,37 @@
 
         .glass-panel {
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 3rem 2rem;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.1), inset 0 0 20px rgba(0, 243, 255, 0.05);
             text-align: center;
+            position: relative;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 20%;
+            right: 20%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
         }
 
         h1 {
-            font-size: 2rem;
-            font-weight: 600;
+            font-size: 2.5rem;
+            font-weight: 800;
             margin: 0 0 0.5rem 0;
-            background: linear-gradient(to right, #60a5fa, #34d399);
+            background: linear-gradient(to right, var(--accent), var(--neon-magenta));
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.3));
         }
 
         p.subtitle {
@@ -64,24 +89,41 @@
 
         /* Upload Zone */
         .upload-zone {
-            border: 2px dashed var(--accent);
+            border: 1px solid var(--accent);
             border-radius: 12px;
-            padding: 2.5rem 1.5rem;
+            padding: 3rem 1.5rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            background: rgba(59, 130, 246, 0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(0, 243, 255, 0.03);
             position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0, 243, 255, 0.05);
+        }
+
+        .upload-zone::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(transparent 50%, rgba(0, 243, 255, 0.05) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
         }
 
         .upload-zone:hover, .upload-zone.dragover {
-            background: rgba(59, 130, 246, 0.15);
+            background: rgba(0, 243, 255, 0.08);
             border-color: var(--accent-hover);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.1);
+            transform: scale(1.02);
         }
 
         .upload-icon {
-            font-size: 3rem;
+            font-size: 3.5rem;
             display: block;
             margin-bottom: 1rem;
+            filter: drop-shadow(0 0 8px var(--accent));
         }
 
         /* Hide the default file input but keep it in the form */
@@ -103,30 +145,58 @@
         }
 
         .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 0.75rem 2rem;
+            background: rgba(10, 10, 10, 0.8);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 1rem 2rem;
             border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 0.9rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.3s, transform 0.1s;
+            transition: all 0.3s ease;
             margin-top: 2rem;
             width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
         }
 
         .btn:hover {
-            background: var(--accent-hover);
+            background: var(--accent);
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
         }
 
         .btn:active {
-            transform: scale(0.98);
+            transform: scale(0.98) translateY(0);
         }
 
         .btn:disabled {
-            background: #475569;
+            border-color: #475569;
+            color: #475569;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-demo {
+            border-color: var(--neon-magenta);
+            color: var(--neon-magenta);
+            margin-top: 0;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.1);
+        }
+
+        .btn-demo:hover {
+            background: var(--neon-magenta);
+            color: #000;
+            border-color: var(--neon-magenta);
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.4);
         }
     </style>
 </head>
@@ -153,6 +223,16 @@
 
             <button type="submit" class="btn" id="submitBtn">Upload File</button>
         </form>
+
+        <!-- Demo separator and button -->
+        <div style="display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0 1rem;">
+            <div style="flex: 1; height: 1px; background: var(--glass-border);"></div>
+            <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px;">or</span>
+            <div style="flex: 1; height: 1px; background: var(--glass-border);"></div>
+        </div>
+
+        <a href="/demo" class="btn btn-demo">🚀 Try Demo</a>
+        <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0.5rem 0 0; text-align: center;">Load a sample log to preview the dashboard</p>
     </div>
 </div>
 

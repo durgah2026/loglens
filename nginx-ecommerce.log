@@ -1,0 +1,4 @@
+192.168.10.2 - - [23/Nov/2025:09:59:58 +0000] "GET /flash-sale HTTP/2" 200 1823 "https://loganalytics.org" "Mozilla/5.0 (Macintosh)"
+192.168.10.2 - - [23/Nov/2025:09:59:58 +0000] "GET /static/app.js HTTP/2" 200 35521 "https://loganalytics.org/flash-sale" "Mozilla/5.0 (Macintosh)"
+198.51.100.9 - - [23/Nov/2025:10:00:01 +0000] "POST /checkout HTTP/2" 302 512 "https://loganalytics.org/cart" "okhttp/4.9"
+198.51.100.9 - - [23/Nov/2025:10:00:02 +0000] "GET /order/complete HTTP/2" 200 9481 "https://loganalytics.org/checkout" "okhttp/4.9"

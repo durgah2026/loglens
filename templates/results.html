@@ -3,51 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parsing Results - LogLens</title>
+    <title>Analysis Results - LogLens</title>
+    <meta name="description" content="LogLens security log analysis results – attack type distribution, top offensive IPs, and parsed log entries.">
+
+    <!-- Chart.js CDN - only dependency besides Google Fonts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
         :root {
-            --bg-color: #0f172a;
-            --glass-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f8fafc;
+            --bg-color: #030305;
+            --glass-bg: rgba(10, 10, 15, 0.85);
+            --glass-border: rgba(0, 243, 255, 0.25);
+            --text-main: #e2e8f0;
             --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #60a5fa;
-            --success: #10b981;
-            --error: #ef4444;
+            --accent: #00f3ff;
+            --accent-hover: #70ffff;
+            --success: #39ff14;
+            --error: #ff0055;
+            --warning: #fff01f;
+            --purple: #bc13fe;
+            --chart-grid: rgba(0, 243, 255, 0.1);
         }
+
+        *, *::before, *::after { box-sizing: border-box; }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
-            background-image: radial-gradient(circle at top right, #1e3a8a 0%, transparent 40%),
-                              radial-gradient(circle at bottom left, #064e3b 0%, transparent 40%);
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030305 100%);
+            background-size: 30px 30px, 30px 30px, 100% 100%;
             color: var(--text-main);
             margin: 0;
-            padding: 2rem;
+            padding: 2rem 1rem;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
 
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
+            margin: 0 auto;
         }
 
         header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
         }
 
         h1 {
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin: 0;
-            background: linear-gradient(to right, #60a5fa, #34d399);
+            font-size: 2.6rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem;
+            background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -55,9 +75,11 @@
 
         p.subtitle {
             color: var(--text-muted);
-            margin-top: 0.5rem;
+            margin: 0;
+            font-size: 1rem;
         }
 
+        /* ── Glass Panel ─────────────────────────────── */
         .glass-panel {
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
@@ -65,44 +87,95 @@
             border: 1px solid var(--glass-border);
             border-radius: 16px;
             padding: 2rem;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
             margin-bottom: 2rem;
         }
 
-        /* Stats Row */
-        .stats-row {
+        .panel-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 0 0 1.5rem;
             display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 1rem;
+            border-radius: 2px;
+            background: linear-gradient(to bottom, var(--accent), var(--purple));
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* ── Stats Row ───────────────────────────────── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 1rem;
             margin-bottom: 2rem;
         }
 
         .stat-card {
-            flex: 1;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             border-radius: 12px;
             padding: 1.5rem;
             text-align: center;
+            transition: border-color 0.3s, transform 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(96, 165, 250, 0.4);
+            transform: translateY(-2px);
         }
 
         .stat-value {
-            font-size: 2.5rem;
-            font-weight: 600;
+            font-size: 2.8rem;
+            font-weight: 800;
             color: var(--success);
+            line-height: 1;
+            filter: drop-shadow(0 0 10px rgba(57, 255, 20, 0.3));
         }
+
+        .stat-value.accent { color: var(--accent); filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.3)); }
+        .stat-value.warning { color: var(--warning); filter: drop-shadow(0 0 10px rgba(255, 240, 31, 0.3)); }
+        .stat-value.purple { color: #d883ff; filter: drop-shadow(0 0 10px rgba(188, 19, 254, 0.3)); }
 
         .stat-label {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.78rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-top: 0.5rem;
+            margin-top: 0.6rem;
         }
 
-        /* Table */
-        .table-container {
-            overflow-x: auto;
+        /* ── Charts Grid ─────────────────────────────── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
+
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            /* Fixed height so Chart.js respects it */
+            height: 300px;
+        }
+
+        /* ── Table ───────────────────────────────────── */
+        .table-container { overflow-x: auto; }
 
         table {
             width: 100%;
@@ -111,66 +184,93 @@
         }
 
         th, td {
-            padding: 1rem;
+            padding: 0.9rem 1rem;
             border-bottom: 1px solid var(--glass-border);
+            white-space: nowrap;
         }
 
         th {
             color: var(--text-muted);
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             letter-spacing: 0.5px;
         }
 
-        tr:hover td {
-            background: rgba(255, 255, 255, 0.05);
-        }
+        tr:hover td { background: rgba(255, 255, 255, 0.04); }
 
         .status-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
             font-weight: 600;
         }
 
-        .status-200 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .status-201 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .status-400, .status-403, .status-404 { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-        .status-500 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .status-2xx { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+        .status-4xx { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+        .status-5xx { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
 
+        .attack-sql  { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .attack-xss  { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .attack-brute { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .attack-dir  { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+        .attack-none { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
+
+        /* ── Buttons ─────────────────────────────────── */
         .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
+            background: rgba(10, 10, 10, 0.8);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 0.8rem 1.75rem;
             border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 0.85rem;
+            font-weight: 700;
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
-            transition: background 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
         }
 
         .btn:hover {
-            background: var(--accent-hover);
+            background: var(--accent);
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
         }
-        
+
+        /* ── Message Boxes ───────────────────────────── */
         .message-box {
-            padding: 1rem;
-            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
             text-align: center;
             margin-bottom: 2rem;
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            border: 1px solid #10b981;
+            background: rgba(57, 255, 20, 0.05);
+            color: var(--success);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: inset 0 0 15px rgba(57, 255, 20, 0.1);
         }
-        
+
         .error-box {
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.15);
             color: #f87171;
-            border: 1px solid #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        /* ── No-data placeholder ─────────────────────── */
+        .no-chart-data {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-style: italic;
         }
     </style>
 </head>
@@ -178,8 +278,9 @@
 
 <div class="container">
     <header>
-        <h1>Upload Results</h1>
-        <p class="subtitle">Your log file has been analyzed</p>
+        <div class="logo-text">⚡ LogLens</div>
+        <h1>Analysis Results</h1>
+        <p class="subtitle">Your log file has been analyzed for security threats</p>
     </header>
 
     {% if error %}
@@ -191,23 +292,54 @@
             <button class="btn" onclick="window.history.back()">Go Back</button>
         </div>
     </div>
+
     {% else %}
     <div class="message-box">
-        <strong>Success!</strong> {{ message }}
+        <strong>✅ Success!</strong> {{ message }}
     </div>
 
+    <!-- ── Stats ──────────────────────────────────────── -->
     <div class="stats-row">
         <div class="stat-card">
             <div class="stat-value">{{ parsed_count }}</div>
             <div class="stat-label">Total Logs Parsed</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ data|length }}</div>
-            <div class="stat-label">Recent Logs Showed</div>
+            <div class="stat-value accent">{{ data|length }}</div>
+            <div class="stat-label">Entries Displayed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value warning">
+                {{ summary.attack_type_counts.values() | sum if summary.attack_type_counts else 0 }}
+            </div>
+            <div class="stat-label">Threats Detected</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value purple">{{ summary.top_offensive_ips | length if summary.top_offensive_ips else 0 }}</div>
+            <div class="stat-label">Unique Threat IPs</div>
         </div>
     </div>
 
+    <!-- ── Charts ─────────────────────────────────────── -->
+    <div class="charts-grid">
+        <div class="glass-panel" style="margin-bottom:0;">
+            <p class="panel-title">Attack Type Distribution</p>
+            <div class="chart-wrapper">
+                <canvas id="attackTypeChart"></canvas>
+            </div>
+        </div>
+        <div class="glass-panel" style="margin-bottom:0;">
+            <p class="panel-title">Top Offensive IPs</p>
+            <div class="chart-wrapper">
+                <canvas id="topIPsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div style="margin-bottom: 2rem;"></div>
+
+    <!-- ── Log Table ──────────────────────────────────── -->
     <div class="glass-panel table-container">
+        <p class="panel-title">Log Entries (Latest 50)</p>
         <table>
             <thead>
                 <tr>
@@ -225,43 +357,275 @@
                     <td>{{ item.time }}</td>
                     <td>{{ item.ip }}</td>
                     <td><strong>{{ item.method }}</strong></td>
-                    <td>{{ item.path }}</td>
+                    <td style="max-width:240px; overflow:hidden; text-overflow:ellipsis;">{{ item.path }}</td>
                     <td>
-                        {% set status_int = item.status|int %}
-                        {% if status_int >= 200 and status_int < 300 %}
-                            {% set status_class = 'status-200' %}
-                        {% elif status_int >= 400 and status_int < 500 %}
-                            {% set status_class = 'status-400' %}
-                        {% elif status_int >= 500 %}
-                            {% set status_class = 'status-500' %}
+                        {% set s = item.status | int %}
+                        {% if s >= 200 and s < 300 %}
+                            <span class="status-badge status-2xx">{{ item.status }}</span>
+                        {% elif s >= 400 and s < 500 %}
+                            <span class="status-badge status-4xx">{{ item.status }}</span>
+                        {% elif s >= 500 %}
+                            <span class="status-badge status-5xx">{{ item.status }}</span>
                         {% else %}
-                            {% set status_class = '' %}
+                            <span class="status-badge">{{ item.status }}</span>
                         {% endif %}
-                        <span class="status-badge {{ status_class }}">{{ item.status }}</span>
                     </td>
                     <td>
                         {% if item.attack == "SQL Injection" %}
-                            <span class="status-badge status-400">SQL Injection 🔴</span>
+                            <span class="status-badge attack-sql">SQL Injection 🔴</span>
                         {% elif item.attack == "XSS" %}
-                            <span class="status-badge status-500">XSS 🟡</span>
+                            <span class="status-badge attack-xss">XSS 🟡</span>
                         {% elif item.attack == "Brute Force" %}
-                            <span class="status-badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">Brute Force 🔵</span>
+                            <span class="status-badge attack-brute">Brute Force 🔵</span>
+                        {% elif item.attack == "Directory Traversal" %}
+                            <span class="status-badge attack-dir">Dir Traversal 🟣</span>
                         {% else %}
-                            <span class="status-badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">None ⚪</span>
+                            <span class="status-badge attack-none">None ⚪</span>
                         {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        
+
         <div style="text-align: center; margin-top: 2rem;">
-            <!-- If we know the user came from upload.html, a back button works best -->
-            <button class="btn" onclick="window.history.back()">Upload Another File</button>
+            <button class="btn" onclick="window.history.back()">⬆ Upload Another File</button>
         </div>
     </div>
     {% endif %}
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHART.JS INTEGRATION
+     Data is embedded directly from Flask/Jinja2 (`summary`
+     template variable) so we avoid an extra HTTP round-trip.
+     Memory Safety: chart instances are stored in a module-level
+     object; any existing instance is destroyed via .destroy()
+     before a new one is created, preventing canvas reuse errors.
+     Data is capped at 10 (attack types) and 20 (IPs) server-side.
+═══════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+    'use strict';
+
+    /* ── 1. Embed summary data from Flask ──────────────────
+       The Jinja2 `tojson` filter safely serialises Python
+       dicts/lists to valid JSON and escapes HTML special
+       chars, so this is safe to inline in a <script> tag.
+    ────────────────────────────────────────────────────── */
+    {% if summary %}
+    const SUMMARY = {{ summary | tojson }};
+    {% else %}
+    const SUMMARY = null;
+    {% endif %}
+
+    /* ── 2. Shared Chart.js defaults ──────────────────────
+       Applied once to every chart rendered on this page.
+    ────────────────────────────────────────────────────── */
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 12;
+
+    /* ── 3. Memory-safety registry ────────────────────────
+       Holds active Chart instances keyed by canvas id.
+       Before rendering, we destroy any stale instance.
+    ────────────────────────────────────────────────────── */
+    const CHART_REGISTRY = {};
+
+    function safeCreateChart(canvasId, config) {
+        /* Destroy previous instance attached to this canvas */
+        if (CHART_REGISTRY[canvasId]) {
+            CHART_REGISTRY[canvasId].destroy();
+            delete CHART_REGISTRY[canvasId];
+        }
+
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return null;
+
+        const ctx = canvas.getContext('2d');
+        const chart = new Chart(ctx, config);
+        CHART_REGISTRY[canvasId] = chart;
+        return chart;
+    }
+
+    /* ── 4. Helper: create gradient fill ──────────────────
+       Builds a top→bottom linear gradient on a canvas.
+    ────────────────────────────────────────────────────── */
+    function makeGradient(ctx, colorStart, colorEnd) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, colorStart);
+        gradient.addColorStop(1, colorEnd);
+        return gradient;
+    }
+
+    /* ── 5. Colour map for known attack types ─────────────
+       Covers known threat categories; unknown types fall
+       back to a neutral slate colour.
+    ────────────────────────────────────────────────────── */
+    const ATTACK_COLORS = {
+        'SQL Injection':       { bar: 'rgba(255, 0, 85, 0.7)',   border: '#ff0055' },
+        'XSS':                 { bar: 'rgba(255, 240, 31, 0.7)',  border: '#fff01f' },
+        'Brute Force':         { bar: 'rgba(0, 243, 255, 0.7)',  border: '#00f3ff' },
+        'Directory Traversal': { bar: 'rgba(188, 19, 254, 0.7)', border: '#bc13fe' },
+    };
+    const DEFAULT_COLOR = { bar: 'rgba(148, 163, 184, 0.4)', border: '#94a3b8' };
+
+    /* ── 6. Attack Type Distribution Chart ────────────────
+       Bar chart – top 10 attack types (capped server-side).
+       Each bar is coloured by attack severity/type.
+    ────────────────────────────────────────────────────── */
+    function renderAttackTypeChart(attackCounts) {
+        const canvasId = 'attackTypeChart';
+        const wrapper = document.getElementById(canvasId)?.parentElement;
+
+        if (!attackCounts || Object.keys(attackCounts).length === 0) {
+            if (wrapper) wrapper.innerHTML = '<div class="no-chart-data">No attack data recorded</div>';
+            return;
+        }
+
+        /* Sort descending; limit already enforced server-side (top 10) */
+        const sorted = Object.entries(attackCounts)
+            .sort((a, b) => b[1] - a[1]);
+
+        const labels = sorted.map(([type]) => type);
+        const values = sorted.map(([, count]) => count);
+        const bgColors  = labels.map(l => (ATTACK_COLORS[l] || DEFAULT_COLOR).bar);
+        const brdColors = labels.map(l => (ATTACK_COLORS[l] || DEFAULT_COLOR).border);
+
+        safeCreateChart(canvasId, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Occurrences',
+                    data: values,
+                    backgroundColor: bgColors,
+                    borderColor: brdColors,
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 700, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15,23,42,0.9)',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.y} event${ctx.parsed.y !== 1 ? 's' : ''}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(148,163,184,0.08)' },
+                        ticks: { color: '#94a3b8', maxRotation: 30 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(148,163,184,0.08)' },
+                        ticks: {
+                            color: '#94a3b8',
+                            precision: 0,
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ── 7. Top Offensive IPs Chart ───────────────────────
+       Horizontal bar chart – top 20 IPs by request count
+       (capped server-side). Gradient fill for visual depth.
+    ────────────────────────────────────────────────────── */
+    function renderTopIPsChart(topIPs) {
+        const canvasId = 'topIPsChart';
+        const wrapper = document.getElementById(canvasId)?.parentElement;
+
+        if (!topIPs || topIPs.length === 0) {
+            if (wrapper) wrapper.innerHTML = '<div class="no-chart-data">No IP data recorded</div>';
+            return;
+        }
+
+        /* Data is already sorted descending by the server; limit to 20 */
+        const capped = topIPs.slice(0, 20);
+        const labels = capped.map(d => d.ip);
+        const values = capped.map(d => d.count);
+
+        /* Build gradient once the canvas exists */
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const gradCtx = canvas.getContext('2d');
+        const bgGradient = gradCtx.createLinearGradient(300, 0, 0, 0);
+        bgGradient.addColorStop(0, 'rgba(0, 243, 255, 0.8)');
+        bgGradient.addColorStop(1, 'rgba(188, 19, 254, 0.3)');
+
+        safeCreateChart(canvasId, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Requests',
+                    data: values,
+                    backgroundColor: bgGradient,
+                    borderColor: 'rgba(52,211,153,0.9)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                indexAxis: 'y',          /* horizontal bars */
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 700, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15,23,42,0.9)',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.x} request${ctx.parsed.x !== 1 ? 's' : ''}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(148,163,184,0.08)' },
+                        ticks: { color: '#94a3b8', precision: 0 }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ── 8. Initialise charts once DOM is ready ───────────
+       Charts are rendered once using data embedded in the
+       page by Jinja2. No AJAX polling; no duplicate calls.
+    ────────────────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!SUMMARY) return; /* Error or no-data state */
+
+        renderAttackTypeChart(SUMMARY.attack_type_counts);
+        renderTopIPsChart(SUMMARY.top_offensive_ips);
+    });
+
+})();
+</script>
 
 </body>
 </html>
